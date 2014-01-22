@@ -1,0 +1,25 @@
+﻿@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <link rel="stylesheet" type="text/css" href="~/Content/site.less" />
+    <title>@ViewBag.Title</title>
+</head>
+<body>
+    <div id="@Html.ViewContext.RouteData.Values["controller"].ToString().ToLowerInvariant()-@Html.ViewContext.RouteData.Values["action"].ToString().ToLowerInvariant()" class="container @Html.ViewContext.RouteData.Values["controller"].ToString().ToLowerInvariant() @Html.ViewContext.RouteData.Values["controller"].ToString().ToLowerInvariant()-@Html.ViewContext.RouteData.Values["action"].ToString().ToLowerInvariant()">
+        @RenderBody()
+        <script src="~/Scripts/require.js" data-main="@Url.Content("~/Scripts/app/main")"></script>
+        @RenderSection("scripts", false)
+        <script>
+            var globalConfig = {
+                baseUrl: "@Url.Absolute("~/")"  
+            };
+        </script>
+    </div>
+</body>
+</html>

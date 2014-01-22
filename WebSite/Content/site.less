@@ -1,0 +1,43 @@
+﻿@import "bootstrap/bootstrap.css";
+
+.field-validation-error {
+    display: none;
+}
+
+
+.home {
+    padding-top: 40px;
+
+    .actions {
+        text-align: center;
+    }
+}
+
+
+.retrospective {
+    .panel {
+        margin-top: 20px;
+    }
+
+    #positive-feedbacks, #negative-feedbacks {
+        textarea {
+            margin-bottom: 10px;
+
+            &.removable {
+                padding-left: 25px;
+            }
+        }
+    }
+
+    .feedback-container {
+        position: relative;
+
+        .remove {
+            position: absolute;
+            left: 0px;
+            z-index: 1000;
+            cursor: pointer;
+            cursor: hand;
+        }
+    }
+}

@@ -1,0 +1,26 @@
+﻿@model LoginViewModel
+
+@{
+    ViewBag.Title = "Hello!!!";
+}
+
+<h3>Hi there!!!</h3>
+    
+@Html.BootstrapValidationSummary()
+
+<form role="form" method="POST" action="@Url.Action("Login")">
+    @Html.AntiForgeryToken()
+    <input type="hidden" id="returnUrl" name="returnUrl" value="@Model.ReturnUrl" />
+    <div class="row">
+        <div class="form-group col-md-4 col-sm-4">
+            <label for="User">What's your name?</label>
+            <input type="text" class="form-control" id="User" name="User" value="@Model.User">
+            @Html.ValidationMessage("User")
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <button type="submit" class="btn btn-primary">Continue</button>
+        </div>
+    </div>
+</form>

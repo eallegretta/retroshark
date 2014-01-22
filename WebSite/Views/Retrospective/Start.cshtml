@@ -1,0 +1,20 @@
+﻿@model StartViewModel
+
+<h3>Before you start, we need to gather some information</h3>
+
+@Html.BootstrapValidationSummary()
+<form role="form" method="POST" action="@Url.Absolute("~/r/start")">
+    @Html.AntiForgeryToken()
+    <div class="row">
+        <div class="form-group col-md-12">
+            <label for="Title">Name your retrospective</label>
+            <input type="text" class="form-control" id="Title" name="Title" value="@Model.Title">
+            @Html.ValidationMessage("Title")
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <button type="submit" class="btn btn-primary">Start!</button>
+        </div>
+    </div>
+</form>

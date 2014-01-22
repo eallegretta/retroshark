@@ -1,0 +1,99 @@
+﻿@using RetroShark.Application.Backend.Entities
+@model RetrospectiveViewModel
+
+@{
+    ViewBag.Title = Model.Retrospective.Title;
+}
+
+@PageContext.ViewModel()
+
+<h2>@Model.Retrospective.Title</h2>
+
+<script id="retrospective-code" type="text/plain">@Model.Retrospective.ParticipantCode</script>
+<script id="logged-user-id" type="text/plain">@((User.Identity as RetroSharkIdentity).User.Id)</script>
+
+<div class="row">
+    <div class="col-md-12">
+        Participant's link: <a id="clipboard-link" href="@Url.Absolute("~/" + Model.Retrospective.ParticipantCode)">@Url.Absolute("~/" + Model.Retrospective.ParticipantCode)</a>
+        <button data-clipboard-target="clipboard-link" class="btn btn-primary btn-xs" data-bind="click: copyLinkToClipboard">Copy to clipboard</button>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="panel panel-default">
+            <div class="panel-heading">Participants</div>
+            <div class="panel-body" data-bind="template: { name: 'participant-template', foreach: participants }">
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<div class="row">
+    <div id="positive-feedbacks" class="col-md-6">
+        <div class="panel panel-default">
+            <div class="panel-heading">Positive Feedbacks</div>
+            <div class="panel-body" data-bind="template: { name: 'feedback-template', foreach: positiveFeedbacks }">
+            </div>
+        </div>
+
+        @if (Model.IsAdmin)
+        {
+            <button id="add-positive-feedback" class="btn btn-primary" data-bind="click: addPositiveFeedback">Add Positive Feedback</button>
+        }
+    </div>
+    <div id="negative-feedbacks" class="col-md-6">
+        <div class="panel panel-default">
+            <div class="panel-heading">Negative Feedbacks</div>
+            <div class="panel-body" data-bind="template: { name: 'feedback-template', foreach: negativeFeedbacks }">
+            </div>
+        </div>
+
+        @if (Model.IsAdmin)
+        {
+            <button id="add-negative-feedback" class="btn btn-primary" data-bind="click: addNegativeFeedback">Add Negative Feedback</button>
+        }
+    </div>
+</div>
+
+<script type="text/html" id="feedback-template">
+    <div class="feedback-container">
+        <button class="remove btn btn-xs btn-danger" data-bind="click: $parent.removeFeedback"><span class="glyphicon glyphicon-remove-circle"></span></button>
+        <textarea class="@(Model.IsAdmin ? "removable" : string.Empty) col-md-12" rows="4" data-bind="value: Text"></textarea>
+    </div>
+</script>
+
+<script type="text/html" id="participant-template">
+    <span class="label label-primary" data-bind="text: Username, css: { 'label-success': IsAdmin }"></span>
+</script>
+
+@if (Model.IsAdmin)
+{
+    <div class="row">
+        <div id="positive-answers" class="col-md-6">
+            <div class="panel panel-default">
+                <div class="panel-heading">Positive Answers</div>
+                <div class="panel-body">
+                    <ul data-bind="template: { name: 'answer-template', foreach: positiveAnswers }">
+                    </ul>
+                </div>
+            </div>
+
+        </div>
+        <div id="negative-answers" class="col-md-6">
+            <div class="panel panel-default">
+                <div class="panel-heading">Negative Answers</div>
+                <div class="panel-body">
+                    <ul data-bind="template: { name: 'answer-template', foreach: negativeAnswers }">
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script type="text/html" id="answer-template">
+        <li data-bind="text: text"></li>
+    </script>
+}
