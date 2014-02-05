@@ -1,0 +1,15 @@
+﻿@using RetroShark.Application.Backend.Entities
+@model RetrospectiveViewModel
+
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h2>@Model.Retrospective.Title</h2>
+
+<script id="retrospective-code" type="text/plain">@Model.Retrospective.ParticipantCode</script>
+<script id="logged-user-id" type="text/plain">@((User.Identity as RetroSharkIdentity).User.Id)</script>
+
+@{Html.RenderPartial("Participants");}
+
+@RenderBody()

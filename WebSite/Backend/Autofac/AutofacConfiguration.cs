@@ -2,9 +2,7 @@
 using System.Web.Mvc;
 using Autofac;
 using Autofac.Integration.Mvc;
-using CommonServiceLocator.AutofacAdapter.Unofficial;
 using Microsoft.AspNet.SignalR;
-using Microsoft.Practices.ServiceLocation;
 
 namespace RetroShark.Application.Backend.Autofac
 {
@@ -22,8 +20,6 @@ namespace RetroShark.Application.Backend.Autofac
 
             DependencyResolver.SetResolver(new AutofacDependencyResolver(Container));
             GlobalHost.DependencyResolver = new global::Autofac.Integration.SignalR.AutofacDependencyResolver(Container);
-
-            ServiceLocator.SetLocatorProvider(() => new AutofacServiceLocator(Container));
         }
     }
 }

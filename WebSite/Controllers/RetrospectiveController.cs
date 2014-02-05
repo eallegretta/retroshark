@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Web.Mvc;
+using Microsoft.AspNet.SignalR;
 using RetroShark.Application.Backend.Commands;
 using RetroShark.Application.Backend.Services;
+using RetroShark.Application.Hubs;
 using RetroShark.Application.Models;
 
 namespace RetroShark.Application.Controllers
@@ -57,6 +59,20 @@ namespace RetroShark.Application.Controllers
             }
 
             return Start(new StartViewModel { Title = createRetrospective.Title });
+        }
+
+        public ActionResult SaveFeedbacks(SaveFeedbacksCommand saveFeedbacks)
+        {
+            if (ModelState.IsValid)
+            {
+                CommandProcessor.Process(saveFeedbacks);
+
+                var retrospective = _retrospectiveService.GetByCode(saveFeedbacks.RetrospectiveCode);
+
+                GlobalHost.ConnectionManager.GetHubContext<RetrospectiveHub>().Clients.Group(retrospective.ParticipantCode).refreshRetrospective(retrospective);
+            }
+
+
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System.Web.Mvc;
 using System.Web.Routing;
+using Microsoft.AspNet.SignalR;
 
 namespace RetroShark.Application.App_Start
 {
@@ -9,7 +10,7 @@ namespace RetroShark.Application.App_Start
         {
             routes.IgnoreRoute("{resource}.axd/{*pathInfo}");
 
-            routes.MapHubs();
+            routes.MapHubs(new HubConfiguration { EnableDetailedErrors = true });
 
             routes.MapRoute(
                    name: "Retrospective",
@@ -19,7 +20,7 @@ namespace RetroShark.Application.App_Start
             routes.MapRoute(
                     name: "RetrospectiveController",
                     url: "r/{action}",
-                    defaults: new {controller = "Retrospective"});
+                    defaults: new { controller = "Retrospective" });
 
             routes.MapRoute(
                 name: "Default",

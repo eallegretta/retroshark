@@ -1,0 +1,23 @@
+﻿@model RetrospectiveViewModel
+
+<div class="row">
+    <div class="col-md-12">
+        Participant's link: <a id="clipboard-link" href="@Url.Absolute("~/" + Model.Retrospective.ParticipantCode)">@Url.Absolute("~/" + Model.Retrospective.ParticipantCode)</a>
+    </div>
+</div>
+
+@PageContext.ViewModel()
+
+<div id="participants" class="row">
+    <div class="col-md-12">
+        <div class="panel panel-default">
+            <div class="panel-heading">Participants</div>
+            <div class="panel-body" data-bind="template: { name: 'participant-template', foreach: participants }">
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/html" id="participant-template">
+    <span class="label label-primary" data-bind="text: Username, css: { 'label-success': IsAdmin }"></span>
+</script>

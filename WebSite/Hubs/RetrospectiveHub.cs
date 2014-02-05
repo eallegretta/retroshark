@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Web.Mvc;
 using Microsoft.AspNet.SignalR;
@@ -9,47 +10,79 @@ using RetroShark.Application.Hubs.Models;
 
 namespace RetroShark.Application.Hubs
 {
-    public class RetrospectiveHub: Hub
+    public class RetrospectiveHub : Hub
     {
         private readonly IAuthenticationService _authenticationService;
         private readonly IRetrospectiveService _retrospectiveService;
 
+        private string _code;
+
         public RetrospectiveHub()
+            : this(DependencyResolver.Current.GetService<IAuthenticationService>(), DependencyResolver.Current.GetService<IRetrospectiveService>())
         {
-            _authenticationService = DependencyResolver.Current.GetService<IAuthenticationService>();
-            _retrospectiveService = DependencyResolver.Current.GetService<IRetrospectiveService>();
+
+        }
+
+        public RetrospectiveHub(IAuthenticationService authenticationService, IRetrospectiveService retrospectiveService)
+        {
+            _authenticationService = authenticationService;
+            _retrospectiveService = retrospectiveService;
+        }
+
+        private string GetParticipantsGroupName()
+        {
+            if (string.IsNullOrWhiteSpace(_code))
+            {
+                using (new NHibernateUnitOfWork())
+                {
+                    var retrospective = _retrospectiveService.GetByCode(Context.QueryString["code"]);
+
+                    if (retrospective == null)
+                    {
+                        throw new Exception("Retrospective not found");
+                    }
+
+                    _code = retrospective.ParticipantCode;
+                }
+            }
+
+            return _code;
+        }
+
+        private string GetAdminsGroupName()
+        {
+            return GetParticipantsGroupName() + "-admins";
         }
 
         public async override Task OnConnected()
         {
-            string code = Context.QueryString["code"];
-
-            Retrospective retrospective;
-
-            using (new NHibernateUnitOfWork())
-            {
-                retrospective = _retrospectiveService.GetByCode(code);
-            }
-
-            if (retrospective == null)
-            {
-                throw new Exception("Retrospective not found");
-            }
-
-            code = retrospective.ParticipantCode;
+            string group = GetParticipantsGroupName();
+            string adminGroup = GetAdminsGroupName();
 
             bool isAdmin = _authenticationService.IsLoggedUserAdmin();
 
             if (isAdmin)
             {
-                await Groups.Add(Context.ConnectionId, code + "-admins");
+                await Groups.Add(Context.ConnectionId, adminGroup);
             }
 
-            await Groups.Add(Context.ConnectionId, code);
+            await Groups.Add(Context.ConnectionId, group);
 
-            Clients.Group(code).userLogin(Context.ConnectionId, (Context.User.Identity as RetroSharkIdentity).User);
+            // Inform other users we've just logged in
+            Clients.Group(group).userLogin(Context.ConnectionId, (Context.User.Identity as RetroSharkIdentity).User);
+
+            // Request from admins the current feedbacks 
+            Clients.OthersInGroup(group).requestFeedbacks(Context.ConnectionId);
 
             await base.OnConnected();
+        }
+
+        public async override Task OnDisconnected()
+        {
+            // Inform other users we've just logged out
+            Clients.OthersInGroup(GetParticipantsGroupName()).userLogout(Context.ConnectionId);
+
+            await base.OnDisconnected();
         }
 
         public void SendUsername(string destinationConnectionId)
@@ -57,21 +90,24 @@ namespace RetroShark.Application.Hubs
             Clients.Client(destinationConnectionId).userLogin(destinationConnectionId, (Context.User.Identity as RetroSharkIdentity).User);
         }
 
-        public async override Task OnDisconnected()
+        public void SendRequestedFeedbacks(string destinationConnectionId, string[] positiveFeedbackIds, string[] negativeFeedbackIds)
         {
-            Clients.OthersInGroup(Context.QueryString["code"]).userLogout(Context.ConnectionId);
-
-            await base.OnDisconnected();
+            if (!string.IsNullOrWhiteSpace(destinationConnectionId))
+            {
+                Clients.Client(destinationConnectionId).addRequestedFeedbacks(positiveFeedbackIds.Where(x => x != null), negativeFeedbackIds.Where(x => x != null));
+            }
+            else
+            {
+                Clients.OthersInGroup(GetParticipantsGroupName()).addRequestedFeedbacks(positiveFeedbackIds.Where(x => x != null), negativeFeedbackIds.Where(x => x != null));
+            }
         }
 
-        public void AddFeedbackContainer(FeedbackModel[] feedbacks)
+        public void RemoveFeedback(string feedbackId)
         {
-            if (!_authenticationService.IsLoggedUserAdmin())
+            if (_authenticationService.IsLoggedUserAdmin())
             {
-                return;
+                Clients.OthersInGroup(GetParticipantsGroupName()).removeFeedback(feedbackId);
             }
-                
-            Clients.OthersInGroup(Context.QueryString["code"]).addFeedbackContainer(feedbacks);
         }
     }
 }

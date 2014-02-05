@@ -1,12 +1,11 @@
 ﻿require.config({
     baseUrl: '/Scripts',
-    
+
     paths: {
-        "jquery": "jquery-1.9.1.min",
+        "jquery": "jquery-2.0.3.min",
         "bootstrap": "bootstrap.min",
-        "ZeroClipboard": "ZeroClipboard.min",
-        "ko": "knockout-2.3.0",
-        "signalr": "jquery.signalR-1.1.3.min",
+        "ko": "knockout-3.0.0",
+        "signalr": "jquery.signalR-1.2.0.min",
         "signalr-hubs": "/signalr/hubs?_",
         "json": "json2.min",
         "underscore": "underscore-extensions"
@@ -24,17 +23,33 @@
     }
 });
 
-define("config", function() {
+define("config", function () {
     return globalConfig;
 });
 
 require(["ko", "signalr-hubs", "bootstrap", "app/validation-summary"], function (ko) {
-    $(document).ready(function() {
-        $("[data-view-module]").each(function() {
+    $(document).ready(function () {
+
+        var viewModels = $("[data-view-model]");
+
+        var loadCounter = 0;
+
+        $(viewModels).each(function () {
             var filename = $(this).text();
 
-            require(["app" + filename], function(viewModule) {
-                ko.applyBindings(viewModule);
+            require(["app" + filename], function (viewModel) {
+
+                if (viewModel.target) {
+                    ko.applyBindings(viewModel, $(viewModel.target)[0]);
+                } else {
+                    ko.applyBindings(viewModel);
+                }
+
+                loadCounter++;
+                
+                if (loadCounter == viewModels.length) {
+                    $(document).trigger("viewModelsReady");
+                }
             });
         });
     });

@@ -1,4 +1,4 @@
-﻿@import "bootstrap/bootstrap.css";
+﻿@import "bootstrap.min.css";
 
 .field-validation-error {
     display: none;
@@ -31,13 +31,20 @@
 
     .feedback-container {
         position: relative;
+        float: left;
+        width: 100%;
 
         .remove {
             position: absolute;
             left: 0px;
+            top: 0px;
             z-index: 1000;
             cursor: pointer;
             cursor: hand;
         }
+    }
+
+    #save-answers {
+        margin-top: 10px;
     }
 }

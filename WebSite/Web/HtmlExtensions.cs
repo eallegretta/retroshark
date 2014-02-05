@@ -18,7 +18,7 @@ namespace System.Web.Mvc.Html
         {
             string viewModelFile = pageContext.Page.VirtualPath.ToLowerInvariant().Replace("~", string.Empty).Replace(".cshtml", string.Empty);
 
-            return MvcHtmlString.Create(string.Format("<script data-view-module type=\"plain/text\">{0}</script>", viewModelFile));
+            return MvcHtmlString.Create(string.Format("<script data-view-model type=\"plain/text\">{0}</script>", viewModelFile));
         }
     }
 }

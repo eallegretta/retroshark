@@ -9,40 +9,20 @@ namespace RetroShark.Application.Backend.Services
 {
     public class AuthenticationService : IAuthenticationService
     {
-        private readonly HttpContextBase _httpContext;
-
-        public AuthenticationService(HttpContextBase httpContext)
-        {
-            _httpContext = httpContext;
-        }
+        private HttpContextBase HttpContext { get { return new HttpContextWrapper(System.Web.HttpContext.Current); } }
 
         public void Authenticate(string username, bool isAdmin)
         {
-            var ticket = new FormsAuthenticationTicket(
-                1,
-                username,
-                DateTime.Now,
-                DateTime.Now.AddMinutes(HttpContext.Current.Session.Timeout),
-                false,
-                JsonConvert.SerializeObject(new User { Id = Guid.NewGuid(), Username = username, IsAdmin = isAdmin }));
-
-            string encTicket = FormsAuthentication.Encrypt(ticket);
-
-            if (_httpContext.Request.Cookies[FormsAuthentication.FormsCookieName] != null)
-            {
-                _httpContext.Request.Cookies.Remove(FormsAuthentication.FormsCookieName);
-            }
-
-            _httpContext.Response.Cookies.Add(new HttpCookie(FormsAuthentication.FormsCookieName, encTicket));
+            SetAuthenticationTicket(username, isAdmin);
         }
 
         public void SetPrincipal()
         {
-            var cookie = _httpContext.Request.Cookies[FormsAuthentication.FormsCookieName];
+            var cookie = HttpContext.Request.Cookies[FormsAuthentication.FormsCookieName];
 
             if (cookie == null)
             {
-                _httpContext.User = new GenericPrincipal(new GenericIdentity(_httpContext.User.Identity.Name), null);
+                HttpContext.User = new GenericPrincipal(new GenericIdentity(HttpContext.User.Identity.Name), null);
             }
             else
             {
@@ -50,20 +30,18 @@ namespace RetroShark.Application.Backend.Services
 
                 var user = JsonConvert.DeserializeObject<User>(ticket.UserData);
 
-                _httpContext.User = new GenericPrincipal(new RetroSharkIdentity(_httpContext.User.Identity.Name, user), user.IsAdmin ? new[] { "Admin" } : null);
+                HttpContext.User = new GenericPrincipal(new RetroSharkIdentity(HttpContext.User.Identity.Name, user), user.IsAdmin ? new[] { "Admin" } : null);
             }
         }
 
         public User GetLoggedUser()
         {
-            var cookie = _httpContext.Request.Cookies.Get(FormsAuthentication.FormsCookieName);
+            var ticket = GetDecryptedTicket();
 
-            if (cookie == null)
+            if (ticket == null)
             {
                 return null;
             }
-
-            var ticket = FormsAuthentication.Decrypt(cookie.Value);
 
             return JsonConvert.DeserializeObject<User>(ticket.UserData);
         }
@@ -75,7 +53,52 @@ namespace RetroShark.Application.Backend.Services
 
         public void SetAdminRole(string username)
         {
-            Authenticate(username, true);
+            SetAuthenticationTicket(username, true);
+        }
+
+        private void SetAuthenticationTicket(string username, bool isAdmin)
+        {
+            var ticket = GetDecryptedTicket();
+
+            if (ticket == null)
+            {
+                ticket = new FormsAuthenticationTicket(
+                        1,
+                        username,
+                        DateTime.Now,
+                        DateTime.Now.AddMinutes(System.Web.HttpContext.Current.Session.Timeout),
+                        false,
+                        JsonConvert.SerializeObject(new User { Id = Guid.NewGuid(), Username = username, IsAdmin = isAdmin }));
+            }
+            else
+            {
+                var currentUser = GetLoggedUser();
+                currentUser.Username = username;
+                currentUser.IsAdmin = isAdmin;
+                ticket = new FormsAuthenticationTicket(
+                    1,
+                    username,
+                    ticket.IssueDate,
+                    ticket.Expiration,
+                    ticket.IsPersistent,
+                    JsonConvert.SerializeObject(currentUser));
+            }
+
+            string encTicket = FormsAuthentication.Encrypt(ticket);
+
+            HttpContext.Response.Cookies.Add(new HttpCookie(FormsAuthentication.FormsCookieName, encTicket));
+        }
+
+        private FormsAuthenticationTicket GetDecryptedTicket()
+        {
+            var cookie = HttpContext.Request.Cookies.Get(FormsAuthentication.FormsCookieName);
+
+            if (cookie == null)
+            {
+                return null;
+            }
+
+            return FormsAuthentication.Decrypt(cookie.Value);
         }
     }
 }

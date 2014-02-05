@@ -23,7 +23,7 @@ namespace RetroShark.Application.Backend.Autofac
                                 where t.IsSubclassOf(typeof(Command))
                                 select t).ToArray();
 
-            builder.RegisterTypes(commandTypes).InstancePerHttpRequest();
+            builder.RegisterTypes(commandTypes).SingleInstance(); //.InstancePerHttpRequest();
         }
 
         private static void RegisterGenericTypesWithSameInterfaceName(System.Reflection.Assembly assembly, ContainerBuilder builder)
@@ -42,7 +42,8 @@ namespace RetroShark.Application.Backend.Autofac
                 builder
                     .RegisterGeneric(type.Implementation)
                     .As(type.Interface)
-                    .InstancePerHttpRequest();
+                    .SingleInstance();
+                    //.InstancePerHttpRequest();
             }
         }
 
@@ -60,9 +61,10 @@ namespace RetroShark.Application.Backend.Autofac
             foreach (var type in query)
             {
                 builder
-                    .RegisterType(type.Implementation)
-                    .As(type.Interface)
-                    .InstancePerHttpRequest();
+                        .RegisterType(type.Implementation)
+                        .As(type.Interface)
+                        .SingleInstance();
+                //.InstancePerHttpRequest();
             }
         }
     }

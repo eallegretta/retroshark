@@ -1,12 +1,12 @@
 ﻿using System;
-using System.IO;
+using System.ComponentModel.DataAnnotations;
 using System.Reflection;
 using FluentNHibernate.Automapping;
 using FluentNHibernate.Cfg;
+using FluentNHibernate.Conventions;
 using NHibernate;
-using NHibernate.Cfg;
 using NHibernate.Tool.hbm2ddl;
-using RetroShark.Application.Backend.Entities;
+using Configuration = NHibernate.Cfg.Configuration;
 
 namespace RetroShark.Application.Backend.NHibernate
 {
@@ -15,11 +15,15 @@ namespace RetroShark.Application.Backend.NHibernate
         public static ISessionFactory Initialize()
         {
             var cfg = new Configuration();
-            cfg.Configure(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "nhibernate.config"));
+
+            cfg.Configure();
 
             return Fluently
                 .Configure(cfg)
-                .Mappings(m => m.AutoMappings.Add(AutoMap.Assembly(Assembly.GetExecutingAssembly(), new EntitiesMappingConfiguration())))
+                .Mappings(m => m.AutoMappings.Add(
+                        AutoMap.Assembly(Assembly.GetExecutingAssembly(), new EntitiesMappingConfiguration())
+                               .Conventions.AddFromAssemblyOf<StringLengthConvention>()
+                                       ))
                 .ExposeConfiguration(c => new SchemaUpdate(c).Execute(false, true))
                 .BuildSessionFactory();
         }
@@ -40,6 +44,23 @@ namespace RetroShark.Application.Backend.NHibernate
             {
                 return member.IsProperty && member.CanWrite;
             }
+
         }
+
+        private class StringLengthConvention : AttributePropertyConvention<StringLengthAttribute>
+        {
+            protected override void Apply(StringLengthAttribute attribute, FluentNHibernate.Conventions.Instances.IPropertyInstance instance)
+            {
+                if (attribute.MaximumLength == int.MaxValue)
+                {
+                    instance.CustomSqlType("TEXT");
+                }
+                else
+                {
+                    instance.Length(attribute.MaximumLength);
+                }
+            }
+        }
+
     }
 }
